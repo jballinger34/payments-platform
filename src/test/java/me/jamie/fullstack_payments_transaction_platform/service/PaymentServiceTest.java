@@ -191,7 +191,7 @@ class PaymentServiceTest {
 
         PaymentNotFoundException e = assertThrows(PaymentNotFoundException.class, () -> service.getPayment(id));
 
-        assertEquals("Payment " + id + " not found", e.getMessage());
+        assertEquals("Payment " + id + " not found.", e.getMessage());
 
         verify(repo, times(1)).findById(id);
     }
@@ -327,7 +327,7 @@ class PaymentServiceTest {
 
         assertNotNull(result);
         assertEquals(2, result.size());
-        assertEquals(payments, result);
+        assertEquals(List.of(payment1, payment2), result);
     }
     @Test
     void testGetPaymentsByPayerName_Empty() {

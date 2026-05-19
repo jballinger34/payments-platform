@@ -20,21 +20,40 @@ public class PaymentService {
     }
 
     public Payment createPayment(String payerName, String payeeName, BigDecimal amount, Currency currency){
-        throw new UnsupportedOperationException("not implemented yet");
+        if(payeeName == null || payerName == null) throw new IllegalArgumentException("payer and payee must not be null");
+        if(currency == null) throw new IllegalArgumentException("currency must not be null");
+
+        if(amount == null) throw new IllegalArgumentException("amount must not be null");
+        if(amount.scale() > 2) throw new IllegalArgumentException("amount cannot have more than 2 decimal places");
+        if(amount.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("amount must be greater than 0");
+
+        Payment payment = new Payment(payerName, payeeName, amount, currency);
+        return repo.save(payment);
     }
     public List<Payment> getAllPayments(){
-        throw new UnsupportedOperationException("not implemented yet");
+        return repo.findAll();
     }
     public Payment getPayment(String id) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("not implemented yet");
+        if(id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be null or blank");
+
+        return repo.findById(id)
+                .orElseThrow(() -> new PaymentNotFoundException(id));
     }
     public Payment updateStatus(String id, PaymentStatus status){
-        throw new UnsupportedOperationException("not implemented yet");
+        if(id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be null or blank");
+        if(status == null) throw new IllegalArgumentException("status cannot be null");
+        Payment payment = getPayment(id);
+        payment.setStatus(status);
+
+        repo.save(payment);
+        return payment;
     }
     public List<Payment> getPaymentsByStatus(PaymentStatus status){
-        throw new UnsupportedOperationException("not implemented yet");
+        if(status == null) throw new IllegalArgumentException("status cannot be null");
+        return getAllPayments().stream().filter(payment -> payment.getStatus().equals(status)).toList();
     }
     public List<Payment> getPaymentsByPayerName(String payerName){
-        throw new UnsupportedOperationException("not implemented yet");
+        if(payerName == null) throw new IllegalArgumentException("payer name cannot be null");
+        return getAllPayments().stream().filter(payment -> payment.getPayerName().equals(payerName)).toList();
     }
 }

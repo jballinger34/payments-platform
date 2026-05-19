@@ -57,6 +57,7 @@ public class Payment {
     }
 
     public void setStatus(PaymentStatus status) {
+        if(this.status == PaymentStatus.COMPLETED) throw new IllegalStateException("cannot change state of a completed payment");
         this.status = status;
     }
 }
