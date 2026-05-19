@@ -1,17 +1,15 @@
 package me.jamie.fullstack_payments_transaction_platform.service;
 
 import me.jamie.fullstack_payments_transaction_platform.exception.PaymentNotFoundException;
-import me.jamie.fullstack_payments_transaction_platform.model.Currency;
-import me.jamie.fullstack_payments_transaction_platform.model.Payment;
-import me.jamie.fullstack_payments_transaction_platform.model.PaymentStatus;
+import me.jamie.fullstack_payments_transaction_platform.entity.Currency;
+import me.jamie.fullstack_payments_transaction_platform.entity.Payment;
+import me.jamie.fullstack_payments_transaction_platform.entity.PaymentStatus;
 import me.jamie.fullstack_payments_transaction_platform.repository.PaymentRepo;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Collections;

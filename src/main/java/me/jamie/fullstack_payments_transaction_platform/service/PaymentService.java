@@ -1,9 +1,9 @@
 package me.jamie.fullstack_payments_transaction_platform.service;
 
 import me.jamie.fullstack_payments_transaction_platform.exception.PaymentNotFoundException;
-import me.jamie.fullstack_payments_transaction_platform.model.Currency;
-import me.jamie.fullstack_payments_transaction_platform.model.Payment;
-import me.jamie.fullstack_payments_transaction_platform.model.PaymentStatus;
+import me.jamie.fullstack_payments_transaction_platform.entity.Currency;
+import me.jamie.fullstack_payments_transaction_platform.entity.Payment;
+import me.jamie.fullstack_payments_transaction_platform.entity.PaymentStatus;
 import me.jamie.fullstack_payments_transaction_platform.repository.PaymentRepo;
 import org.springframework.stereotype.Service;
 
