@@ -24,7 +24,7 @@ public class PaymentController {
         throw new UnsupportedOperationException("not implemented yet");
     }
     @PutMapping("/payments/{id}/status")
-    public void getPayment(@RequestBody PaymentStatus status){
+    public void updateStatus(@PathVariable String id, @RequestBody PaymentStatus status){
         throw new UnsupportedOperationException("not implemented yet");
     }
     @GetMapping("/payments/search/status/{status}")
