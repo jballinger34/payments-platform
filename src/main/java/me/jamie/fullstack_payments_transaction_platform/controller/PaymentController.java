@@ -32,7 +32,7 @@ public class PaymentController {
         throw new UnsupportedOperationException("not implemented yet");
     }
 
-    @GetMapping("/payments/search/status/{payerName}")
+    @GetMapping("/payments/search/payer/{payerName}")
     public List<PaymentDto> getPaymentsByPayerName(@PathVariable String payerName){
         throw new UnsupportedOperationException("not implemented yet");
     }
