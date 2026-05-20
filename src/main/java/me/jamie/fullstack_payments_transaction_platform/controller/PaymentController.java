@@ -3,6 +3,7 @@ package me.jamie.fullstack_payments_transaction_platform.controller;
 import jakarta.validation.Valid;
 import me.jamie.fullstack_payments_transaction_platform.data.dto.PaymentDto;
 import me.jamie.fullstack_payments_transaction_platform.data.request.PaymentRequest;
+import me.jamie.fullstack_payments_transaction_platform.data.request.UpdateStatusRequest;
 import me.jamie.fullstack_payments_transaction_platform.entity.Payment;
 import me.jamie.fullstack_payments_transaction_platform.entity.PaymentStatus;
 import me.jamie.fullstack_payments_transaction_platform.service.PaymentService;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 public class PaymentController {
 
@@ -38,8 +40,8 @@ public class PaymentController {
         return PaymentDto.from(paymentService.getPayment(id));
     }
     @PutMapping("/payments/{id}/status")
-    public PaymentDto updateStatus(@PathVariable String id, @RequestBody PaymentStatus status){
-        Payment payment = paymentService.updateStatus(id, status);
+    public PaymentDto updateStatus(@PathVariable String id, @RequestBody UpdateStatusRequest request){
+        Payment payment = paymentService.updateStatus(id, request.status());
         return PaymentDto.from(payment);
     }
     @GetMapping("/payments/search/status/{status}")
