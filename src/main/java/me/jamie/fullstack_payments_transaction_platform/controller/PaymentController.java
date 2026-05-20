@@ -21,7 +21,7 @@ public class PaymentController {
 
     @PostMapping("/payments")
     @ResponseStatus(HttpStatus.CREATED)
-    public void createPayment(@Valid @RequestBody PaymentRequest paymentRequest){
+    public PaymentDto createPayment(@Valid @RequestBody PaymentRequest paymentRequest){
         throw new UnsupportedOperationException("not implemented yet");
     }
     @GetMapping("/payments")

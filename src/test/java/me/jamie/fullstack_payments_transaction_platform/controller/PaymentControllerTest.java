@@ -51,6 +51,24 @@ public class PaymentControllerTest {
         verify(paymentService, times(1)).createPayment(eq("Payer"), eq("Payee"), eq(new BigDecimal("100.01")), eq(Currency.GBP));
     }
     @Test
+    void testCreatePayment_Success_ReturnsCorrectPaymentData() throws Exception {
+
+        Payment payment = new Payment("123", "Payer", "Payee", new BigDecimal("100.01"), Currency.GBP, PaymentStatus.INITIATED);
+        when(paymentService.createPayment("Payer", "Payee", new BigDecimal("100.01"), Currency.GBP)).thenReturn(payment);
+
+        mockMvc.perform(get("/payments"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.payerName").value("Payer"))
+                .andExpect(jsonPath("$.payeeName").value("Payee"))
+                .andExpect(jsonPath("$.amount").value(100.00))
+                .andExpect(jsonPath("$.currency").value("GBP"))
+                .andExpect(jsonPath("$.status").value("INITIATED"));
+
+        verify(paymentService, times(1)).createPayment(eq("Payer"), eq("Payee"), eq(new BigDecimal("100.01")), eq(Currency.GBP));
+
+    }
+    @Test
     void testCreatePayment_InvalidJson_Returns400() throws Exception {
         mockMvc.perform(post("/payments")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -110,7 +128,8 @@ public class PaymentControllerTest {
                 .andExpect(jsonPath("$[0].payerName").value("Payer"))
                 .andExpect(jsonPath("$[0].payeeName").value("Payee"))
                 .andExpect(jsonPath("$[0].amount").value(100.00))
-                .andExpect(jsonPath("$[0].currency").value("GBP"));
+                .andExpect(jsonPath("$[0].currency").value("GBP"))
+                .andExpect(jsonPath("$[0].status").value("INITIATED"));
 
         verify(paymentService).getAllPayments();
     }
