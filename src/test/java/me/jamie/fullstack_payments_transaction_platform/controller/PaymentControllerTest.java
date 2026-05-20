@@ -7,6 +7,7 @@ import me.jamie.fullstack_payments_transaction_platform.entity.Currency;
 import me.jamie.fullstack_payments_transaction_platform.entity.Payment;
 import me.jamie.fullstack_payments_transaction_platform.entity.PaymentStatus;
 import me.jamie.fullstack_payments_transaction_platform.exception.PaymentNotFoundException;
+import me.jamie.fullstack_payments_transaction_platform.exception.PersistenceException;
 import me.jamie.fullstack_payments_transaction_platform.service.PaymentService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import scala.concurrent.impl.FutureConvertersImpl;
+import scala.concurrent.java8.FuturesConvertersImpl;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -22,6 +24,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PaymentController.class)
@@ -42,6 +45,10 @@ public class PaymentControllerTest {
     void testCreatePayment_Success_Returns201() throws Exception {
         PaymentRequest request = new PaymentRequest("Payer", "Payee", new BigDecimal("100.01"), Currency.GBP);
 
+        Payment payment = new Payment("123", "Payer", "Payee", new BigDecimal("100.01"), Currency.GBP, PaymentStatus.INITIATED);
+        when(paymentService.createPayment("Payer", "Payee", new BigDecimal("100.01"), Currency.GBP)).thenReturn(payment);
+
+
         String json = objectMapper.writeValueAsString(request);
         mockMvc.perform(post("/payments")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -52,21 +59,23 @@ public class PaymentControllerTest {
     }
     @Test
     void testCreatePayment_Success_ReturnsCorrectPaymentData() throws Exception {
+        PaymentRequest request = new PaymentRequest("Payer", "Payee", new BigDecimal("100.01"), Currency.GBP);
 
         Payment payment = new Payment("123", "Payer", "Payee", new BigDecimal("100.01"), Currency.GBP, PaymentStatus.INITIATED);
         when(paymentService.createPayment("Payer", "Payee", new BigDecimal("100.01"), Currency.GBP)).thenReturn(payment);
 
-        mockMvc.perform(get("/payments"))
-                .andExpect(status().isOk())
+        mockMvc.perform(post("/payments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.payerName").value("Payer"))
                 .andExpect(jsonPath("$.payeeName").value("Payee"))
-                .andExpect(jsonPath("$.amount").value(100.00))
+                .andExpect(jsonPath("$.amount").value(100.01))
                 .andExpect(jsonPath("$.currency").value("GBP"))
                 .andExpect(jsonPath("$.status").value("INITIATED"));
 
         verify(paymentService, times(1)).createPayment(eq("Payer"), eq("Payee"), eq(new BigDecimal("100.01")), eq(Currency.GBP));
-
     }
     @Test
     void testCreatePayment_InvalidJson_Returns400() throws Exception {
@@ -147,9 +156,9 @@ public class PaymentControllerTest {
     }
 
     @Test
-    void testGetAllPayments_ServiceThrowsRuntimeException_Returns500() throws Exception {
+    void testGetAllPayments_ServiceThrowsPersistenceException_Returns500() throws Exception {
 
-        when(paymentService.getAllPayments()).thenThrow(new RuntimeException("Simulating DB failure"));
+        when(paymentService.getAllPayments()).thenThrow(new PersistenceException("Simulating DB failure"));
 
         mockMvc.perform(get("/payments"))
                 .andExpect(status().isInternalServerError());
@@ -185,9 +194,9 @@ public class PaymentControllerTest {
         verify(paymentService, times(1)).getPayment("999");
     }
     @Test
-    void testGetPaymentById_ServiceThrowsException_Returns500() throws Exception {
+    void testGetPaymentById_ServiceThrowsPersistenceException_Returns500() throws Exception {
 
-        when(paymentService.getPayment("123")).thenThrow(new RuntimeException("Simulating DB crash"));
+        when(paymentService.getPayment("123")).thenThrow(new PersistenceException("Simulating DB crash"));
 
         mockMvc.perform(get("/payments/123"))
                 .andExpect(status().isInternalServerError());
@@ -198,15 +207,38 @@ public class PaymentControllerTest {
     //update status
     @Test
     void testUpdateStatus_Success() throws Exception {
-
         PaymentStatus status = PaymentStatus.COMPLETED;
+        Payment payment = new Payment("123", "Payer", "Payee", new BigDecimal("100.01"), Currency.GBP, status);
+        when(paymentService.updateStatus("123", PaymentStatus.COMPLETED)).thenReturn(payment);
 
         mockMvc.perform(put("/payments/123/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(status)))
                 .andExpect(status().isOk());
 
+        verify(paymentService, times(1)).updateStatus(eq("123"), eq(status));
+    }
+    @Test
+    void testUpdateStatus_Success_ReturnsCorrectPaymentData() throws Exception {
+
+        Payment payment = new Payment("123", "Payer", "Payee", new BigDecimal("100.01"), Currency.GBP, PaymentStatus.COMPLETED);
+        when(paymentService.updateStatus("123", PaymentStatus.COMPLETED)).thenReturn(payment);
+
+        PaymentStatus status = PaymentStatus.COMPLETED;
+
+        mockMvc.perform(put("/payments/123/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(status)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.payerName").value("Payer"))
+                .andExpect(jsonPath("$.payeeName").value("Payee"))
+                .andExpect(jsonPath("$.amount").value(100.01))
+                .andExpect(jsonPath("$.currency").value("GBP"))
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+
         verify(paymentService, times(1)).updateStatus(eq("123"), eq(PaymentStatus.COMPLETED));
+
     }
     @Test
     void testUpdateStatus_InvalidEnum_Returns400() throws Exception {
@@ -248,9 +280,9 @@ public class PaymentControllerTest {
         verify(paymentService, times(1)).updateStatus("123", PaymentStatus.COMPLETED);
     }
     @Test
-    void testUpdateStatus_ServiceThrowsException_Returns500() throws Exception {
+    void testUpdateStatus_ServiceThrowsPersistenceException_Returns500() throws Exception {
 
-        when(paymentService.updateStatus(any(), any())).thenThrow(new RuntimeException("DB failure"));
+        when(paymentService.updateStatus(any(), any())).thenThrow(new PersistenceException("DB failure"));
         PaymentStatus status = PaymentStatus.COMPLETED;
 
         mockMvc.perform(put("/payments/123/status")
@@ -275,7 +307,7 @@ public class PaymentControllerTest {
                 .andExpect(jsonPath("$[0].payeeName").value("Payee"))
                 .andExpect(jsonPath("$[0].amount").value(100.00))
                 .andExpect(jsonPath("$[0].currency").value("GBP"))
-                .andExpect(jsonPath("$.status").value("STATUS"));
+                .andExpect(jsonPath("$[0].status").value("COMPLETED"));
 
         verify(paymentService, times(1))
                 .getPaymentsByStatus(PaymentStatus.COMPLETED);
@@ -299,9 +331,9 @@ public class PaymentControllerTest {
         verify(paymentService, never()).getPaymentsByStatus(any());
     }
     @Test
-    void testGetPaymentsByStatus_ServiceThrowsException_Returns500() throws Exception {
+    void testGetPaymentsByStatus_ServiceThrowsPersistenceException_Returns500() throws Exception {
 
-        when(paymentService.getPaymentsByStatus(any())).thenThrow(new RuntimeException("Simulating DB failure"));
+        when(paymentService.getPaymentsByStatus(any())).thenThrow(new PersistenceException("Simulating DB failure"));
 
         mockMvc.perform(get("/payments/search/status/COMPLETED"))
                 .andExpect(status().isInternalServerError());
@@ -325,7 +357,7 @@ public class PaymentControllerTest {
                 .andExpect(jsonPath("$[0].payeeName").value("Payee"))
                 .andExpect(jsonPath("$[0].amount").value(100.00))
                 .andExpect(jsonPath("$[0].currency").value("GBP"))
-                .andExpect(jsonPath("$.status").value("STATUS"));
+                .andExpect(jsonPath("$[0].status").value("COMPLETED"));
 
         verify(paymentService, times(1))
                 .getPaymentsByPayerName("Payer");
@@ -342,9 +374,9 @@ public class PaymentControllerTest {
     }
 
     @Test
-    void testGetPaymentsByPayerName_ServiceThrowsException_Returns500() throws Exception {
+    void testGetPaymentsByPayerName_ServiceThrowsPersistenceException_Returns500() throws Exception {
 
-        when(paymentService.getPaymentsByPayerName(any())).thenThrow(new RuntimeException("Simulating DB failure"));
+        when(paymentService.getPaymentsByPayerName(any())).thenThrow(new PersistenceException("Simulating DB failure"));
 
         mockMvc.perform(get("/payments/search/payer/Payer"))
                 .andExpect(status().isInternalServerError());

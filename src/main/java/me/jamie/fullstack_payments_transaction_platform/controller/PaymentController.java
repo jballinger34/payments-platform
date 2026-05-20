@@ -3,6 +3,7 @@ package me.jamie.fullstack_payments_transaction_platform.controller;
 import jakarta.validation.Valid;
 import me.jamie.fullstack_payments_transaction_platform.data.dto.PaymentDto;
 import me.jamie.fullstack_payments_transaction_platform.data.request.PaymentRequest;
+import me.jamie.fullstack_payments_transaction_platform.entity.Payment;
 import me.jamie.fullstack_payments_transaction_platform.entity.PaymentStatus;
 import me.jamie.fullstack_payments_transaction_platform.service.PaymentService;
 import org.springframework.http.HttpStatus;
@@ -22,28 +23,35 @@ public class PaymentController {
     @PostMapping("/payments")
     @ResponseStatus(HttpStatus.CREATED)
     public PaymentDto createPayment(@Valid @RequestBody PaymentRequest paymentRequest){
-        throw new UnsupportedOperationException("not implemented yet");
+        Payment payment = paymentService.createPayment(
+                paymentRequest.payerName(), paymentRequest.payeeName(),
+                paymentRequest.amount(), paymentRequest.currency());
+        return PaymentDto.from(payment);
     }
     @GetMapping("/payments")
     public List<PaymentDto> getAllPayment(){
-        throw new UnsupportedOperationException("not implemented yet");
+        List<Payment> payments = paymentService.getAllPayments();
+        return payments.stream().map(PaymentDto::from).toList();
     }
     @GetMapping("/payments/{id}")
     public PaymentDto getPayment(@PathVariable String id){
-        throw new UnsupportedOperationException("not implemented yet");
+        return PaymentDto.from(paymentService.getPayment(id));
     }
     @PutMapping("/payments/{id}/status")
-    public void updateStatus(@PathVariable String id, @RequestBody PaymentStatus status){
-        throw new UnsupportedOperationException("not implemented yet");
+    public PaymentDto updateStatus(@PathVariable String id, @RequestBody PaymentStatus status){
+        Payment payment = paymentService.updateStatus(id, status);
+        return PaymentDto.from(payment);
     }
     @GetMapping("/payments/search/status/{status}")
     public List<PaymentDto> getPaymentsByStatus(@PathVariable PaymentStatus status){
-        throw new UnsupportedOperationException("not implemented yet");
+        List<Payment> paymentsWithStatus = paymentService.getPaymentsByStatus(status);
+        return paymentsWithStatus.stream().map(PaymentDto::from).toList();
     }
 
     @GetMapping("/payments/search/payer/{payerName}")
     public List<PaymentDto> getPaymentsByPayerName(@PathVariable String payerName){
-        throw new UnsupportedOperationException("not implemented yet");
+        List<Payment> paymentsForPayer = paymentService.getPaymentsByPayerName(payerName);
+        return paymentsForPayer.stream().map(PaymentDto::from).toList();
     }
 
 
