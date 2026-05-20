@@ -1,9 +1,11 @@
 package me.jamie.fullstack_payments_transaction_platform.controller;
 
+import jakarta.validation.Valid;
 import me.jamie.fullstack_payments_transaction_platform.data.dto.PaymentDto;
 import me.jamie.fullstack_payments_transaction_platform.data.request.PaymentRequest;
 import me.jamie.fullstack_payments_transaction_platform.entity.PaymentStatus;
 import me.jamie.fullstack_payments_transaction_platform.service.PaymentService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -11,8 +13,15 @@ import java.util.List;
 @RestController
 public class PaymentController {
 
+    private PaymentService paymentService;
+
+    public PaymentController(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
+
     @PostMapping("/payments")
-    public void createPayment(@RequestBody PaymentRequest paymentRequest){
+    @ResponseStatus(HttpStatus.CREATED)
+    public void createPayment(@Valid @RequestBody PaymentRequest paymentRequest){
         throw new UnsupportedOperationException("not implemented yet");
     }
     @GetMapping("/payments")
