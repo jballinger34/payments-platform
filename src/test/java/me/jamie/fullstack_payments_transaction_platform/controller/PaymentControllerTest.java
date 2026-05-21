@@ -1,8 +1,8 @@
 package me.jamie.fullstack_payments_transaction_platform.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import me.jamie.fullstack_payments_transaction_platform.data.dto.PaymentDto;
 import me.jamie.fullstack_payments_transaction_platform.data.request.PaymentRequest;
+import me.jamie.fullstack_payments_transaction_platform.data.request.UpdateStatusRequest;
 import me.jamie.fullstack_payments_transaction_platform.entity.Currency;
 import me.jamie.fullstack_payments_transaction_platform.entity.Payment;
 import me.jamie.fullstack_payments_transaction_platform.entity.PaymentStatus;
@@ -15,8 +15,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import scala.concurrent.impl.FutureConvertersImpl;
-import scala.concurrent.java8.FuturesConvertersImpl;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -24,7 +22,6 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PaymentController.class)
@@ -207,28 +204,28 @@ public class PaymentControllerTest {
     //update status
     @Test
     void testUpdateStatus_Success() throws Exception {
-        PaymentStatus status = PaymentStatus.COMPLETED;
-        Payment payment = new Payment("123", "Payer", "Payee", new BigDecimal("100.01"), Currency.GBP, status);
+        UpdateStatusRequest statusRequest = new UpdateStatusRequest(PaymentStatus.COMPLETED);
+        Payment payment = new Payment("123", "Payer", "Payee", new BigDecimal("100.01"), Currency.GBP, statusRequest.status());
         when(paymentService.updateStatus("123", PaymentStatus.COMPLETED)).thenReturn(payment);
 
         mockMvc.perform(put("/payments/123/status")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(status)))
+                        .content(objectMapper.writeValueAsString(statusRequest)))
                 .andExpect(status().isOk());
 
-        verify(paymentService, times(1)).updateStatus(eq("123"), eq(status));
+        verify(paymentService, times(1)).updateStatus(eq("123"), eq(PaymentStatus.COMPLETED));
     }
     @Test
     void testUpdateStatus_Success_ReturnsCorrectPaymentData() throws Exception {
-
-        Payment payment = new Payment("123", "Payer", "Payee", new BigDecimal("100.01"), Currency.GBP, PaymentStatus.COMPLETED);
+        UpdateStatusRequest statusRequest = new UpdateStatusRequest(PaymentStatus.COMPLETED);
+        Payment payment = new Payment("123", "Payer", "Payee", new BigDecimal("100.01"), Currency.GBP, statusRequest.status());
         when(paymentService.updateStatus("123", PaymentStatus.COMPLETED)).thenReturn(payment);
 
-        PaymentStatus status = PaymentStatus.COMPLETED;
+
 
         mockMvc.perform(put("/payments/123/status")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(status)))
+                        .content(objectMapper.writeValueAsString(statusRequest)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.payerName").value("Payer"))
@@ -270,11 +267,11 @@ public class PaymentControllerTest {
         when(paymentService.updateStatus(eq("123"), eq(PaymentStatus.COMPLETED)))
                 .thenThrow(new PaymentNotFoundException("Not found"));
 
-        PaymentStatus status = PaymentStatus.COMPLETED;
+        UpdateStatusRequest statusRequest = new UpdateStatusRequest(PaymentStatus.COMPLETED);
 
         mockMvc.perform(put("/payments/123/status")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(status)))
+                        .content(objectMapper.writeValueAsString(statusRequest)))
                 .andExpect(status().isNotFound());
 
         verify(paymentService, times(1)).updateStatus("123", PaymentStatus.COMPLETED);
@@ -283,11 +280,11 @@ public class PaymentControllerTest {
     void testUpdateStatus_ServiceThrowsPersistenceException_Returns500() throws Exception {
 
         when(paymentService.updateStatus(any(), any())).thenThrow(new PersistenceException("DB failure"));
-        PaymentStatus status = PaymentStatus.COMPLETED;
+        UpdateStatusRequest statusRequest = new UpdateStatusRequest(PaymentStatus.COMPLETED);
 
         mockMvc.perform(put("/payments/123/status")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(status)))
+                        .content(objectMapper.writeValueAsString(statusRequest)))
                 .andExpect(status().isInternalServerError());
 
         verify(paymentService, times(1)).updateStatus("123", PaymentStatus.COMPLETED);

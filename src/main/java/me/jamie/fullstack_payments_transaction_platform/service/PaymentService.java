@@ -1,6 +1,7 @@
 package me.jamie.fullstack_payments_transaction_platform.service;
 
 import me.jamie.fullstack_payments_transaction_platform.data.event.PaymentCreatedEvent;
+import me.jamie.fullstack_payments_transaction_platform.data.event.PaymentUpdatedStatusEvent;
 import me.jamie.fullstack_payments_transaction_platform.exception.PaymentNotFoundException;
 import me.jamie.fullstack_payments_transaction_platform.entity.Currency;
 import me.jamie.fullstack_payments_transaction_platform.entity.Payment;
@@ -51,9 +52,11 @@ public class PaymentService {
         if(id == null || id.isBlank()) throw new IllegalArgumentException("id cannot be null or blank");
         if(status == null) throw new IllegalArgumentException("status cannot be null");
         Payment payment = getPayment(id);
+        PaymentStatus oldStatus = payment.getStatus();
         payment.setStatus(status);
 
         repo.save(payment);
+        producer.publishPaymentStatusUpdated(PaymentUpdatedStatusEvent.from(payment, oldStatus, status));
         return payment;
     }
     public List<Payment> getPaymentsByStatus(PaymentStatus status){

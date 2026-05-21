@@ -1,6 +1,7 @@
 package me.jamie.fullstack_payments_transaction_platform.service;
 
 import me.jamie.fullstack_payments_transaction_platform.data.event.PaymentCreatedEvent;
+import me.jamie.fullstack_payments_transaction_platform.data.event.PaymentUpdatedStatusEvent;
 import me.jamie.fullstack_payments_transaction_platform.exception.PaymentNotFoundException;
 import me.jamie.fullstack_payments_transaction_platform.entity.Currency;
 import me.jamie.fullstack_payments_transaction_platform.entity.Payment;
@@ -235,7 +236,6 @@ class PaymentServiceTest {
         Payment payment = new Payment("Payer", "Payee",new BigDecimal("10.72"), Currency.GBP);
 
         when(repo.findById(id)).thenReturn(Optional.of(payment));
-
         when(repo.save(any(Payment.class))).thenReturn(payment);
 
         Payment result = service.updateStatus(id, PaymentStatus.COMPLETED);
@@ -245,6 +245,7 @@ class PaymentServiceTest {
 
         verify(repo, times(1)).findById(id);
         verify(repo, times(1)).save(payment);
+        verify(producer, times(1)).publishPaymentStatusUpdated(any(PaymentUpdatedStatusEvent.class));
     }
     @Test
     void testUpdateNullStatus() {
