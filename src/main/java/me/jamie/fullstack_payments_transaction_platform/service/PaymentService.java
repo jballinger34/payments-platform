@@ -1,9 +1,11 @@
 package me.jamie.fullstack_payments_transaction_platform.service;
 
+import me.jamie.fullstack_payments_transaction_platform.data.event.PaymentCreatedEvent;
 import me.jamie.fullstack_payments_transaction_platform.exception.PaymentNotFoundException;
 import me.jamie.fullstack_payments_transaction_platform.entity.Currency;
 import me.jamie.fullstack_payments_transaction_platform.entity.Payment;
 import me.jamie.fullstack_payments_transaction_platform.entity.PaymentStatus;
+import me.jamie.fullstack_payments_transaction_platform.kafka.PaymentEventProducer;
 import me.jamie.fullstack_payments_transaction_platform.repository.PaymentRepo;
 import org.springframework.stereotype.Service;
 
@@ -13,10 +15,12 @@ import java.util.List;
 @Service
 public class PaymentService {
 
-    private PaymentRepo repo;
+    private final PaymentRepo repo;
+    private final PaymentEventProducer producer;
 
-    public PaymentService(PaymentRepo repo) {
+    public PaymentService(PaymentRepo repo, PaymentEventProducer producer) {
         this.repo = repo;
+        this.producer = producer;
     }
 
     public Payment createPayment(String payerName, String payeeName, BigDecimal amount, Currency currency){
@@ -27,8 +31,12 @@ public class PaymentService {
         if(amount.scale() > 2) throw new IllegalArgumentException("amount cannot have more than 2 decimal places");
         if(amount.compareTo(BigDecimal.ZERO) <= 0) throw new IllegalArgumentException("amount must be greater than 0");
 
-        Payment payment = new Payment(payerName, payeeName, amount, currency);
-        return repo.save(payment);
+        Payment savedPayment = repo.save(new Payment(payerName, payeeName, amount, currency));
+
+        PaymentCreatedEvent event = PaymentCreatedEvent.from(savedPayment);
+        producer.publishPaymentCreated(event);
+
+        return savedPayment;
     }
     public List<Payment> getAllPayments(){
         return repo.findAll();

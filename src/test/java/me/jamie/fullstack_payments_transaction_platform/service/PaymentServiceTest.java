@@ -1,9 +1,11 @@
 package me.jamie.fullstack_payments_transaction_platform.service;
 
+import me.jamie.fullstack_payments_transaction_platform.data.event.PaymentCreatedEvent;
 import me.jamie.fullstack_payments_transaction_platform.exception.PaymentNotFoundException;
 import me.jamie.fullstack_payments_transaction_platform.entity.Currency;
 import me.jamie.fullstack_payments_transaction_platform.entity.Payment;
 import me.jamie.fullstack_payments_transaction_platform.entity.PaymentStatus;
+import me.jamie.fullstack_payments_transaction_platform.kafka.PaymentEventProducer;
 import me.jamie.fullstack_payments_transaction_platform.repository.PaymentRepo;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,11 +27,29 @@ class PaymentServiceTest {
 
     @Mock
     PaymentRepo repo;
+    @Mock
+    PaymentEventProducer producer;
 
     @InjectMocks
     PaymentService service;
 
     //create
+    @Test
+    void testCreateFlow_SavesAndPublishesEvent(){
+        String payer = "Payer";
+        String payee = "Payee";
+        BigDecimal amount = new BigDecimal("99.99");
+        Payment payment = new Payment(payer, payee, amount, Currency.GBP);
+
+        when(repo.save(any(Payment.class))).thenReturn(payment);
+
+        Payment result = service.createPayment(payer,payee,amount,Currency.GBP);
+
+        verify(repo, times(1)).save(any(Payment.class));
+        verify(producer, times(1)).publishPaymentCreated(any(PaymentCreatedEvent.class));
+
+        assertEquals(payment,result);
+    }
     @Test
     void testCreateGivesPaymentId(){
 
